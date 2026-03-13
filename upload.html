@@ -1,560 +1,200 @@
 <!DOCTYPE html>
 <html lang="ca">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agent Expert — Pujar Documents</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
-
-  :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --border: #1e1e2e;
-    --accent: #7c6af7;
-    --accent2: #4ade80;
-    --text: #e8e8f0;
-    --muted: #5a5a7a;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    top: -40%;
-    left: -20%;
-    width: 80vw;
-    height: 80vw;
-    background: radial-gradient(circle, rgba(124,106,247,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .container {
-    width: 100%;
-    max-width: 560px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .header {
-    margin-bottom: 2.5rem;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-
-  .logo-dot {
-    width: 10px;
-    height: 10px;
-    background: var(--accent);
-    border-radius: 50%;
-    box-shadow: 0 0 12px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.6; transform: scale(0.8); }
-  }
-
-  .logo-text {
-    font-size: 0.75rem;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-
-  h1 {
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-
-  h1 span {
-    color: var(--accent);
-  }
-
-  .subtitle {
-    margin-top: 0.75rem;
-    color: var(--muted);
-    font-size: 0.95rem;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .drop-zone {
-    background: var(--surface);
-    border: 1.5px dashed var(--border);
-    border-radius: 16px;
-    padding: 3rem 2rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .drop-zone::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(124,106,247,0.05), transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .drop-zone:hover, .drop-zone.dragover {
-    border-color: var(--accent);
-    background: rgba(124,106,247,0.05);
-  }
-
-  .drop-zone:hover::before, .drop-zone.dragover::before {
-    opacity: 1;
-  }
-
-  .drop-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    display: block;
-  }
-
-  .drop-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
-  }
-
-  .drop-sub {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .file-preview {
-    display: none;
-    margin-top: 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .file-preview.visible {
-    display: flex;
-  }
-
-  .file-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(124,106,247,0.15);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-
-  .file-info {
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .file-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .file-size {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    margin-top: 0.2rem;
-  }
-
-  .remove-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0.25rem;
-    transition: color 0.2s;
-    flex-shrink: 0;
-  }
-
-  .remove-btn:hover { color: #ef4444; }
-
-  .upload-btn {
-    width: 100%;
-    margin-top: 1rem;
-    padding: 1rem;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: none;
-    letter-spacing: 0.02em;
-  }
-
-  .upload-btn.visible {
-    display: block;
-  }
-
-  .upload-btn:hover {
-    background: #6b5ce7;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(124,106,247,0.35);
-  }
-
-  .upload-btn:active {
-    transform: translateY(0);
-  }
-
-  .upload-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-
-  .progress-bar {
-    display: none;
-    margin-top: 1rem;
-    background: var(--border);
-    border-radius: 100px;
-    height: 6px;
-    overflow: hidden;
-  }
-
-  .progress-bar.visible { display: block; }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 100px;
-    width: 0%;
-    transition: width 0.3s ease;
-    animation: shimmer 1.5s infinite;
-    background-size: 200% 100%;
-  }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  .status {
-    display: none;
-    margin-top: 1rem;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .status.visible { display: block; }
-
-  .status.success {
-    background: rgba(74,222,128,0.1);
-    border: 1px solid rgba(74,222,128,0.3);
-    color: var(--accent2);
-  }
-
-  .status.error {
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.3);
-    color: #ef4444;
-  }
-
-  .history {
-    margin-top: 2rem;
-  }
-
-  .history-title {
-    font-size: 0.7rem;
-    font-family: 'DM Mono', monospace;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 0.75rem;
-  }
-
-  .history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .history-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: var(--surface);
-    border-radius: 10px;
-    font-size: 0.85rem;
-    border: 1px solid var(--border);
-  }
-
-  .history-item .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent2);
-    flex-shrink: 0;
-  }
-
-  .history-item .name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .made-by {
-    text-align: center;
-    margin-top: 1.5rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--accent);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-  }
-  .made-by:hover { opacity: 1; }
-  .back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    text-decoration: none;
-    margin-bottom: 1.5rem;
-    transition: color 0.2s;
-  }
-  .back-btn:hover { color: var(--accent); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pujar Documents - Agent Expert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .glow-text { text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
 
-<div class="container">
-  <a class="back-btn" href="index.html">← Tornar</a>
-  <div class="header">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      <span class="logo-text">Agent Expert — RAG System</span>
+    <div class="w-full max-w-2xl">
+        <a href="index.html" class="text-gray-400 hover:text-white mb-8 inline-block transition">← Tornar</a>
+        
+        <div class="mb-2 text-xs font-bold tracking-widest text-purple-500 uppercase">
+            🟢 Agent Expert — RAG System
+        </div>
+        
+        <h1 class="text-5xl font-extrabold mb-4 tracking-tight">
+            Puja els teus <br>
+            <span class="text-purple-500 glow-text">documents</span>
+        </h1>
+        
+        <p class="text-gray-400 mb-10 text-sm">
+            // PDF · Excel · L'agent aprendrà del contingut
+        </p>
+
+        <div id="dropZone" class="border-2 border-dashed border-gray-600 rounded-2xl p-10 text-center hover:border-purple-500 transition cursor-pointer bg-gray-800/50 group relative overflow-hidden">
+            <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.xlsx,.xls,.csv">
+            
+            <div class="text-5xl mb-4 group-hover:scale-110 transition duration-300">📁</div>
+            <h3 class="text-xl font-semibold mb-2">Arrossega aquí o clica per seleccionar</h3>
+            <p class="text-gray-500 text-sm">PDF, Excel, CSV — màx. 10MB</p>
+
+            <div id="filePreview" class="hidden mt-6 bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between z-10 relative">
+                <div class="flex items-center gap-3">
+                    <span id="fileIcon" class="text-2xl">📄</span>
+                    <div class="text-left">
+                        <p id="fileName" class="font-semibold text-sm truncate max-w-[200px]">document.pdf</p>
+                        <p id="fileSize" class="text-xs text-gray-400">2.5 MB</p>
+                    </div>
+                </div>
+                <button id="removeFileBtn" class="text-gray-400 hover:text-red-500 p-2 relative z-20">✕</button>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col items-center">
+            <button id="uploadBtn" class="hidden bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 shadow-[0_0_15px_rgba(147,51,234,0.5)] w-full sm:w-auto">
+                Processar document →
+            </button>
+            
+            <div id="progressContainer" class="hidden w-full max-w-md mt-6">
+                <div class="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full bg-purple-500 w-0 transition-all duration-300"></div>
+                </div>
+                <p id="statusMsg" class="text-center text-sm text-gray-400 mt-2">Processant...</p>
+            </div>
+        </div>
+
+        <div class="mt-20 text-center">
+            <span class="text-purple-500 font-bold tracking-widest text-lg glow-text hover:text-purple-400 transition cursor-default">
+                MADE BY CG
+            </span>
+        </div>
     </div>
-    <h1>Puja els teus<br><span>documents</span></h1>
-    <p class="subtitle">// PDF · Excel · L'agent aprendrà del contingut</p>
-  </div>
 
-  <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls,.csv" />
-    <span class="drop-icon">📂</span>
-    <div class="drop-title">Arrossega aquí o clica per seleccionar</div>
-    <div class="drop-sub">PDF, Excel, CSV — màx. 10MB</div>
-  </div>
+    <script>
+        const N8N_WEBHOOK = 'https://n8n-production-ebb1.up.railway.app/webhook/ingest';
+        let selectedFile = null;
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const fileNameEl = document.getElementById('fileName');
+        const fileSizeEl = document.getElementById('fileSize');
+        const fileIconEl = document.getElementById('fileIcon');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const statusMsg = document.getElementById('statusMsg');
 
-  <div class="file-preview" id="filePreview">
-    <div class="file-icon" id="fileIcon">📄</div>
-    <div class="file-info">
-      <div class="file-name" id="fileName">—</div>
-      <div class="file-size" id="fileSize">—</div>
-    </div>
-    <button class="remove-btn" onclick="removeFile()">✕</button>
-  </div>
+        // Efectes visuals en arrossegar
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-purple-500', 'bg-gray-800');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-purple-500', 'bg-gray-800');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purple-500', 'bg-gray-800');
+            if (e.dataTransfer.files.length > 0) {
+                setFile(e.dataTransfer.files[0]);
+            }
+        });
 
-  <div class="progress-bar" id="progressBar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
+        // Quan es selecciona clicant
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                setFile(fileInput.files[0]);
+            }
+        });
 
-  <button class="upload-btn" id="uploadBtn" onclick="uploadFile()">
-    Processar document →
-  </button>
+        // Esborrar fitxer seleccionat
+        removeFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removeFile();
+        });
 
-  <div class="status" id="statusMsg"></div>
-
-  <div class="history" id="history" style="display:none">
-    <div class="history-title">// Documents processats</div>
-    <div class="history-list" id="historyList"></div>
-  </div>
-  <div class="made-by">Made by CG</div>
-</div>
-  const N8N_WEBHOOK = 'https://n8n-production-ebb1.up.railway.app/webhook/ingest';
-  let selectedFile = null;
-  const uploadedDocs = [];
-
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  });
-
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) setFile(file);
-  });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) setFile(fileInput.files[0]);
-  });
-
-  function setFile(file) {
-    selectedFile = file;
-    const icons = { pdf: '📕', xlsx: '📗', xls: '📗', csv: '📊' };
-    const ext = file.name.split('.').pop().toLowerCase();
-    document.getElementById('fileIcon').textContent = icons[ext] || '📄';
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileSize').textContent = formatSize(file.size);
-    document.getElementById('filePreview').classList.add('visible');
-    document.getElementById('uploadBtn').classList.add('visible');
-    document.getElementById('statusMsg').classList.remove('visible');
-  }
-
-  function removeFile() {
-    selectedFile = null;
-    fileInput.value = '';
-    document.getElementById('filePreview').classList.remove('visible');
-    document.getElementById('uploadBtn').classList.remove('visible');
-    document.getElementById('statusMsg').classList.remove('visible');
-  }
-
-  function formatSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  }
-
-  async function uploadFile() {
-    if (!selectedFile) return;
-
-    const btn = document.getElementById('uploadBtn');
-    const progress = document.getElementById('progressBar');
-    const fill = document.getElementById('progressFill');
-    const status = document.getElementById('statusMsg');
-
-    btn.disabled = true;
-    btn.textContent = 'Processant...';
-    progress.classList.add('visible');
-    status.classList.remove('visible');
-
-    // Simular progress
-    let p = 0;
-    const interval = setInterval(() => {
-      p = Math.min(p + Math.random() * 15, 85);
-      fill.style.width = p + '%';
-    }, 300);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('filename', selectedFile.name);
-      formData.append('mimeType', selectedFile.type);
-
-      const res = await fetch(N8N_WEBHOOK, {
-        method: 'POST',
-        body: formData
-      });
-
-      clearInterval(interval);
-      fill.style.width = '100%';
-
-      setTimeout(() => {
-        progress.classList.remove('visible');
-        fill.style.width = '0%';
-
-        if (res.ok) {
-          status.className = 'status visible success';
-          status.textContent = '✅ ' + selectedFile.name + ' processat correctament!';
-          addToHistory(selectedFile.name);
-          removeFile();
-        } else {
-          status.className = 'status visible error';
-          status.textContent = '❌ Error al processar. Torna a intentar-ho.';
+        function setFile(file) {
+            selectedFile = file;
+            const ext = file.name.split('.').pop().toLowerCase();
+            const icons = { 'pdf': '📕', 'xlsx': '📗', 'xls': '📗', 'csv': '📊' };
+            
+            fileIconEl.textContent = icons[ext] || '📄';
+            fileNameEl.textContent = file.name;
+            fileSizeEl.textContent = formatSize(file.size);
+            
+            filePreview.classList.remove('hidden');
+            filePreview.classList.add('flex');
+            uploadBtn.classList.remove('hidden');
+            progressContainer.classList.add('hidden');
         }
 
-        btn.disabled = false;
-        btn.textContent = 'Processar document →';
-      }, 500);
+        function removeFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.classList.add('hidden');
+            filePreview.classList.remove('flex');
+            uploadBtn.classList.add('hidden');
+        }
 
-    } catch (err) {
-      clearInterval(interval);
-      progress.classList.remove('visible');
-      fill.style.width = '0%';
-      status.className = 'status visible error';
-      status.textContent = '❌ Error de connexió amb n8n.';
-      btn.disabled = false;
-      btn.textContent = 'Processar document →';
-    }
-  }
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
 
-  function addToHistory(name) {
-    const now = new Date();
-    const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-    uploadedDocs.unshift({ name, time });
+        // Acció d'enviar al Webhook de n8n
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            uploadBtn.disabled = true;
+            uploadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            progressContainer.classList.remove('hidden');
+            progressBar.classList.replace('bg-red-500', 'bg-purple-500');
+            progressBar.classList.replace('bg-green-500', 'bg-purple-500');
+            progressBar.style.width = '10%';
+            statusMsg.textContent = 'Enviant document a n8n...';
+            statusMsg.className = 'text-center text-sm text-purple-400 mt-2 font-semibold';
 
-    const history = document.getElementById('history');
-    const list = document.getElementById('historyList');
-    history.style.display = 'block';
+            let p = 10;
+            const interval = setInterval(() => {
+                p = Math.min(p + Math.random() * 15, 85);
+                progressBar.style.width = p + '%';
+            }, 300);
 
-    list.innerHTML = uploadedDocs.slice(0, 5).map(d => `
-      <div class="history-item">
-        <div class="dot"></div>
-        <span class="name">${d.name}</span>
-        <span class="time">${d.time}</span>
-      </div>
-    `).join('');
-  }
-<script>
-    const N8N_WEBHOOK = 'https://n8n-production-ebb1...';
-    // ... tot el codi llarg que es veu a la pantalla ...
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const res = await fetch(N8N_WEBHOOK, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+
+                if (res.ok) {
+                    progressBar.classList.replace('bg-purple-500', 'bg-green-500');
+                    statusMsg.textContent = '✅ Document guardat a Pinecone correctament!';
+                    statusMsg.className = 'text-center text-sm text-green-400 mt-2 font-bold';
+                    setTimeout(() => removeFile(), 4000); 
+                } else {
+                    throw new Error('Error al servidor n8n');
+                }
+            } catch (err) {
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                progressBar.classList.replace('bg-purple-500', 'bg-red-500');
+                statusMsg.textContent = '❌ Error de connexió amb n8n. Comprova que el workflow estigui actiu.';
+                statusMsg.className = 'text-center text-sm text-red-400 mt-2 font-bold';
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
     </script>
 </body>
 </html>
