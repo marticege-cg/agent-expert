@@ -30,13 +30,13 @@
         </p>
 
         <div id="dropZone" class="border-2 border-dashed border-gray-600 rounded-2xl p-10 text-center hover:border-purple-500 transition cursor-pointer bg-gray-800/50 group relative overflow-hidden">
-            <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.xlsx,.xls,.csv">
+            <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.xlsx,.xls">
             
             <div class="text-5xl mb-4 group-hover:scale-110 transition duration-300">📁</div>
             <h3 class="text-xl font-semibold mb-2">Arrossega aquí o clica per seleccionar</h3>
-            <p class="text-gray-500 text-sm">PDF, Excel, CSV — màx. 10MB</p>
+            <p class="text-gray-500 text-sm">PDF, Excel — màx. 10MB</p>
 
-            <div id="filePreview" class="hidden mt-6 bg-gray-800 p-4 rounded-xl border border-gray-700 flex items-center justify-between z-10 relative">
+            <div id="filePreview" class="hidden mt-6 bg-gray-800 p-4 rounded-xl border border-gray-700 items-center justify-between z-10 relative">
                 <div class="flex items-center gap-3">
                     <span id="fileIcon" class="text-2xl">📄</span>
                     <div class="text-left">
@@ -49,7 +49,7 @@
         </div>
 
         <div class="mt-8 flex flex-col items-center">
-            <button id="uploadBtn" class="hidden bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 shadow-[0_0_15px_rgba(147,51,234,0.5)] w-full sm:w-auto">
+            <button id="uploadBtn" class="hidden bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 w-full sm:w-auto">
                 Processar document →
             </button>
             
@@ -62,9 +62,7 @@
         </div>
 
         <div class="mt-20 text-center">
-            <span class="text-purple-500 font-bold tracking-widest text-lg glow-text hover:text-purple-400 transition cursor-default">
-                MADE BY CG
-            </span>
+            <span class="text-purple-500 font-bold tracking-widest text-lg glow-text">MADE BY CG</span>
         </div>
     </div>
 
@@ -86,16 +84,16 @@
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('border-purple-500', 'bg-gray-800');
+            dropZone.classList.add('border-purple-500');
         });
         
         dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-purple-500', 'bg-gray-800');
+            dropZone.classList.remove('border-purple-500');
         });
         
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('border-purple-500', 'bg-gray-800');
+            dropZone.classList.remove('border-purple-500');
             if (e.dataTransfer.files.length > 0) {
                 setFile(e.dataTransfer.files[0]);
             }
@@ -116,23 +114,20 @@
         function setFile(file) {
             selectedFile = file;
             const ext = file.name.split('.').pop().toLowerCase();
-            const icons = { 'pdf': '📕', 'xlsx': '📗', 'xls': '📗', 'csv': '📊' };
+            const icons = { 'pdf': '📕', 'xlsx': '📗', 'xls': '📗' };
             
             fileIconEl.textContent = icons[ext] || '📄';
             fileNameEl.textContent = file.name;
             fileSizeEl.textContent = formatSize(file.size);
             
-            filePreview.classList.remove('hidden');
-            filePreview.classList.add('flex');
+            filePreview.style.display = 'flex';
             uploadBtn.classList.remove('hidden');
-            progressContainer.classList.add('hidden');
         }
 
         function removeFile() {
             selectedFile = null;
             fileInput.value = '';
-            filePreview.classList.add('hidden');
-            filePreview.classList.remove('flex');
+            filePreview.style.display = 'none';
             uploadBtn.classList.add('hidden');
         }
 
@@ -146,31 +141,21 @@
             if (!selectedFile) return;
             
             uploadBtn.disabled = true;
-            uploadBtn.classList.add('opacity-50', 'cursor-not-allowed');
             progressContainer.classList.remove('hidden');
-            progressBar.classList.replace('bg-red-500', 'bg-purple-500');
-            progressBar.classList.replace('bg-green-500', 'bg-purple-500');
-            progressBar.style.width = '10%';
-            statusMsg.textContent = 'Convertint document...';
-            statusMsg.className = 'text-center text-sm text-purple-400 mt-2 font-semibold';
-
-            let p = 10;
-            const interval = setInterval(() => {
-                p = Math.min(p + Math.random() * 15, 85);
-                progressBar.style.width = p + '%';
-            }, 300);
+            progressBar.style.width = '30%';
+            statusMsg.textContent = 'Enviant...';
 
             try {
-                const base64 = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
+                const reader = new FileReader();
+                const base64Promise = new Promise((resolve) => {
                     reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
                     reader.readAsDataURL(selectedFile);
                 });
 
-                statusMsg.textContent = 'Enviant a n8n...';
+                const base64 = await base64Promise;
+                progressBar.style.width = '60%';
 
-                const res = await fetch(N8N_WEBHOOK, {
+                const response = await fetch(N8N_WEBHOOK, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -180,26 +165,25 @@
                     })
                 });
 
-                clearInterval(interval);
                 progressBar.style.width = '100%';
 
-                if (res.ok) {
-                    progressBar.classList.replace('bg-purple-500', 'bg-green-500');
-                    statusMsg.textContent = '✅ Document guardat a Pinecone!';
+                if (response.ok) {
+                    progressBar.className = 'h-full bg-green-500 w-full transition-all';
+                    statusMsg.textContent = '✅ Document guardat!';
                     statusMsg.className = 'text-center text-sm text-green-400 mt-2 font-bold';
-                    setTimeout(() => removeFile(), 4000); 
+                    setTimeout(() => removeFile(), 3000);
                 } else {
-                    throw new Error('Error al servidor');
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error('Error del servidor');
                 }
-            } catch (err) {
-                clearInterval(interval);
-                progressBar.style.width = '100%';
-                progressBar.classList.replace('bg-purple-500', 'bg-red-500');
-                statusMsg.textContent = '❌ Error: ' + err.message;
+            } catch (error) {
+                console.error('Upload error:', error);
+                progressBar.className = 'h-full bg-red-500 w-full transition-all';
+                statusMsg.textContent = '❌ Error: ' + error.message;
                 statusMsg.className = 'text-center text-sm text-red-400 mt-2 font-bold';
             } finally {
                 uploadBtn.disabled = false;
-                uploadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         });
     </script>
